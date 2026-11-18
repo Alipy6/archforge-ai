@@ -6,7 +6,7 @@ ArchForge AI transforms product requirements, compliance constraints, and worklo
 
 ---
 
-<img width="1919" height="1019" alt="image" src="https://github.com/user-attachments/assets/81a8b696-dcc3-45a3-9e73-2136caef615c" />
+<img width="1848" height="962" alt="image" src="https://github.com/user-attachments/assets/90a5b0cc-9ee3-4363-9010-5934ddfbef8d" />
 
 ---
 
