@@ -1,0 +1,6 @@
+{
+  "name": "ArchForge AI",
+  "description": "AI-native system architecture compiler, adversarial multi-agent engineering auditor, and real-time cloud FinOps & latency simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
