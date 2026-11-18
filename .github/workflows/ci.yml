@@ -5,9 +5,14 @@ on:
     branches: ['*']
   pull_request:
     branches: ['*']
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  CI: true
+  NODE_OPTIONS: --max-old-space-size=4096
 
 jobs:
   verify-and-build:
@@ -17,16 +22,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Intentionally omit `cache: 'npm'` because AI Studio workspaces use bun.lock
+      # and strip npm lockfiles during GitHub Sync.
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Install dependencies (lockfile-independent)
+        run: npm install --no-package-lock --no-audit --no-fund --legacy-peer-deps
 
       - name: Strict TypeScript check
-        run: npx tsc --noEmit
+        run: npm run lint
 
       - name: Run deterministic unit test suite
         run: npm test
