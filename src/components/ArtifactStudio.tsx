@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Braces,
   Check,
   Copy,
   Download,
@@ -9,12 +10,17 @@ import {
   ServerCog,
 } from 'lucide-react';
 import type {
+  ArchitectureBlueprint,
+  ArchitectureVersion,
   ProductionArtifacts,
   SimulationParams,
   SimulationResult,
 } from '../types/architecture';
+import { serializeBlueprintToJson } from '../engine/exportEngine';
 
 interface ArtifactStudioProps {
+  blueprint: ArchitectureBlueprint;
+  activeVersion: ArchitectureVersion;
   blueprintName: string;
   versionLabel: string;
   artifacts: ProductionArtifacts;
@@ -22,7 +28,7 @@ interface ArtifactStudioProps {
   simulationParams: SimulationParams;
 }
 
-type ArtifactTabId = 'sql' | 'docker' | 'openapi' | 'rfc';
+type ArtifactTabId = 'sql' | 'docker' | 'openapi' | 'rfc' | 'json';
 
 const ARTIFACT_TABS: ReadonlyArray<{
   id: ArtifactTabId;
@@ -59,9 +65,18 @@ const ARTIFACT_TABS: ReadonlyArray<{
     mimeType: 'text/markdown',
     icon: FileText,
   },
+  {
+    id: 'json',
+    filename: 'blueprint.json',
+    subtitle: 'Portable Architecture Graph, Audit & FinOps Schema',
+    mimeType: 'application/json',
+    icon: Braces,
+  },
 ];
 
 export const ArtifactStudio: React.FC<ArtifactStudioProps> = ({
+  blueprint,
+  activeVersion,
   blueprintName,
   versionLabel,
   artifacts,
@@ -85,6 +100,18 @@ export const ArtifactStudio: React.FC<ArtifactStudioProps> = ({
     return `${artifacts.executiveRfcMd.trim()}${appendix}`;
   }, [artifacts.executiveRfcMd, simulation, simulationParams, versionLabel]);
 
+  const blueprintJsonContent = useMemo(
+    () =>
+      serializeBlueprintToJson(
+        blueprint,
+        activeVersion,
+        simulation,
+        simulationParams,
+        activeVersion.createdAt
+      ),
+    [activeVersion, blueprint, simulation, simulationParams]
+  );
+
   const activeContent = useMemo(() => {
     switch (activeTab) {
       case 'sql':
@@ -95,8 +122,10 @@ export const ArtifactStudio: React.FC<ArtifactStudioProps> = ({
         return artifacts.openapiYaml;
       case 'rfc':
         return enrichedRfcMarkdown;
+      case 'json':
+        return blueprintJsonContent;
     }
-  }, [activeTab, artifacts, enrichedRfcMarkdown]);
+  }, [activeTab, artifacts, blueprintJsonContent, enrichedRfcMarkdown]);
 
   const currentTabMeta =
     ARTIFACT_TABS.find((t) => t.id === activeTab) ?? ARTIFACT_TABS[0];
@@ -148,7 +177,7 @@ export const ArtifactStudio: React.FC<ArtifactStudioProps> = ({
             <span>{versionLabel}</span>
           </div>
           <h2 className="mt-1 text-base font-semibold text-zinc-100">
-            Exportable DDL, Infrastructure-as-Code, OpenAPI 3.1 &amp; Executive RFC
+            Exportable DDL, Infrastructure-as-Code, OpenAPI 3.1, Executive RFC &amp; Blueprint JSON
           </h2>
         </div>
 
@@ -212,7 +241,7 @@ export const ArtifactStudio: React.FC<ArtifactStudioProps> = ({
       </div>
 
       {/* Syntax-Styled Line-Numbered Viewer */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 min-h-0 overflow-auto p-4 sm:p-6">
         <div className="max-w-6xl mx-auto bg-[#111114] border border-[#27272a] rounded-lg overflow-hidden">
           <div className="px-4 py-2 bg-[#09090b] border-b border-[#27272a] flex items-center justify-between text-[11px] font-mono text-zinc-400">
             <span>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   Crosshair,
+  Download,
   Flame,
   LayoutGrid,
   Lock,
@@ -30,8 +31,15 @@ import {
   TIER_METADATA,
   TIER_ORDER,
 } from '../engine/layoutEngine';
+import {
+  serializeTopologyToSvg,
+  toSafeDownloadSlug,
+} from '../engine/exportEngine';
 
 interface TopologyCanvasProps {
+  blueprintName?: string;
+  domainTag?: string;
+  versionLabel?: string;
   nodes: ArchNode[];
   edges: ArchEdge[];
   simulation: SimulationResult;
@@ -57,6 +65,9 @@ const PROTOCOL_STROKE: Record<ArchEdge['protocol'], string> = {
 };
 
 export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
+  blueprintName = 'System Architecture',
+  domainTag = 'Distributed Cloud Topology',
+  versionLabel = 'v1',
   nodes,
   edges,
   simulation,
@@ -173,6 +184,37 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
     fitCanvasToViewport();
   };
 
+  const handleExportSvg = useCallback(() => {
+    const svgMarkup = serializeTopologyToSvg({
+      blueprintName,
+      domainTag,
+      versionLabel,
+      nodes,
+      edges,
+      positions,
+      simulation,
+    });
+    const blob = new Blob([svgMarkup], {
+      type: 'image/svg+xml;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${toSafeDownloadSlug(blueprintName)}-${toSafeDownloadSlug(versionLabel)}-topology.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [
+    blueprintName,
+    domainTag,
+    edges,
+    nodes,
+    positions,
+    simulation,
+    versionLabel,
+  ]);
+
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     userManuallyAdjustedViewRef.current = true;
     if (e.ctrlKey || e.metaKey) {
@@ -257,16 +299,26 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
       }
     };
 
-    const handleWindowMouseUp = () => {
-      dragStateRef.current.mode = null;
-      setIsPanning(false);
+    const releaseDragOrPan = () => {
+      if (dragStateRef.current.mode !== null) {
+        dragStateRef.current.mode = null;
+        setIsPanning(false);
+      }
     };
 
     window.addEventListener('mousemove', handleWindowMouseMove);
-    window.addEventListener('mouseup', handleWindowMouseUp);
+    window.addEventListener('mouseup', releaseDragOrPan);
+    window.addEventListener('pointerup', releaseDragOrPan);
+    window.addEventListener('pointercancel', releaseDragOrPan);
+    window.addEventListener('blur', releaseDragOrPan);
+    document.addEventListener('mouseleave', releaseDragOrPan);
     return () => {
       window.removeEventListener('mousemove', handleWindowMouseMove);
-      window.removeEventListener('mouseup', handleWindowMouseUp);
+      window.removeEventListener('mouseup', releaseDragOrPan);
+      window.removeEventListener('pointerup', releaseDragOrPan);
+      window.removeEventListener('pointercancel', releaseDragOrPan);
+      window.removeEventListener('blur', releaseDragOrPan);
+      document.removeEventListener('mouseleave', releaseDragOrPan);
     };
   }, [zoom]);
 
@@ -416,6 +468,19 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               Auto-Tier
+            </button>
+
+            <div className="w-px h-4 bg-[#27272a] mx-0.5" />
+
+            <button
+              type="button"
+              onClick={handleExportSvg}
+              aria-label="Export architecture topology as SVG"
+              title="Download standalone vector SVG architecture diagram"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-sky-300 hover:text-sky-200 hover:bg-sky-500/10 rounded transition-colors whitespace-nowrap cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span>Export SVG</span>
             </button>
 
             {selectedNodeId && (
@@ -758,10 +823,16 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
                   )}
                 </div>
 
-                <div className="mt-1 text-[13px] font-semibold text-zinc-100 leading-snug truncate">
+                <div
+                  title={node.label}
+                  className="mt-1 text-[13px] font-semibold text-zinc-100 leading-snug truncate"
+                >
                   {node.label}
                 </div>
-                <div className="mt-0.5 text-[11px] text-zinc-400 truncate">
+                <div
+                  title={node.technology}
+                  className="mt-0.5 text-[11px] text-zinc-400 truncate"
+                >
                   {node.technology}
                 </div>
               </div>

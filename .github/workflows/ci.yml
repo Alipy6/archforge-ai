@@ -1,0 +1,36 @@
+name: ArchForge AI CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-build:
+    name: Typecheck, Unit Tests & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Strict TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Run deterministic unit test suite
+        run: npm test
+
+      - name: Build production client bundle
+        run: npm run build

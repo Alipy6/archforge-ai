@@ -62,7 +62,7 @@ export const NodeInspectorDrawer: React.FC<NodeInspectorDrawerProps> = ({
     return (
       <aside
         aria-label="Node Inspector"
-        className="h-full bg-[#111114] border-l border-[#27272a] p-5 flex flex-col justify-between"
+        className="h-full min-h-0 overflow-y-auto bg-[#111114] border-l border-[#27272a] p-5 flex flex-col justify-between gap-4"
       >
         <div>
           <div className="flex items-center justify-between">
@@ -96,10 +96,16 @@ export const NodeInspectorDrawer: React.FC<NodeInspectorDrawerProps> = ({
                   className="w-full flex items-center justify-between px-2.5 py-2 rounded bg-[#09090b] border border-[#27272a] hover:border-zinc-600 text-left transition-colors cursor-pointer"
                 >
                   <div className="min-w-0 pr-2">
-                    <div className="text-xs font-medium text-zinc-200 truncate">
+                    <div
+                      title={item.label}
+                      className="text-xs font-medium text-zinc-200 truncate"
+                    >
                       {item.label}
                     </div>
-                    <div className="text-[11px] text-zinc-500 truncate">
+                    <div
+                      title={item.technology}
+                      className="text-[11px] text-zinc-500 truncate"
+                    >
                       {item.technology}
                     </div>
                   </div>
@@ -128,17 +134,22 @@ export const NodeInspectorDrawer: React.FC<NodeInspectorDrawerProps> = ({
   return (
     <aside
       aria-label="Node Inspector"
-      className="h-full bg-[#111114] border-l border-[#27272a] flex flex-col overflow-hidden"
+      className="h-full min-h-0 bg-[#111114] border-l border-[#27272a] flex flex-col overflow-hidden"
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#27272a] flex items-start justify-between gap-3">
+      <div className="px-4 py-3 border-b border-[#27272a] flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-            <span>{TIER_METADATA[node.tier].title}</span>
+            <span className="shrink-0">{TIER_METADATA[node.tier].title}</span>
             <span aria-hidden="true">·</span>
-            <span className="font-mono truncate">{node.id}</span>
+            <span title={node.id} className="font-mono truncate">
+              {node.id}
+            </span>
           </div>
-          <h2 className="mt-0.5 text-base font-semibold text-zinc-100 truncate">
+          <h2
+            title={node.label}
+            className="mt-0.5 text-base font-semibold text-zinc-100 truncate"
+          >
             {node.label}
           </h2>
         </div>
@@ -153,7 +164,7 @@ export const NodeInspectorDrawer: React.FC<NodeInspectorDrawerProps> = ({
       </div>
 
       {/* Scrollable Inspector Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-6 space-y-4">
         {/* Chaos / Blast-Radius Outage Action */}
         <div className="bg-[#09090b] border border-[#27272a] rounded-md p-3 space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -197,7 +208,10 @@ export const NodeInspectorDrawer: React.FC<NodeInspectorDrawerProps> = ({
           <div className="text-[11px] font-medium text-zinc-400">
             Selected Technology
           </div>
-          <div className="mt-1 text-xs font-mono text-sky-300 bg-[#09090b] border border-[#27272a] rounded px-2.5 py-2">
+          <div
+            title={node.technology}
+            className="mt-1 text-xs font-mono text-sky-300 bg-[#09090b] border border-[#27272a] rounded px-2.5 py-2 break-words"
+          >
             {node.technology}
           </div>
           <p className="mt-2 text-xs text-zinc-300 leading-relaxed">
@@ -385,36 +399,44 @@ export const NodeInspectorDrawer: React.FC<NodeInspectorDrawerProps> = ({
             <div className="text-xs text-zinc-500">No connected edges.</div>
           ) : (
             <div className="space-y-1.5">
-              {inboundEdges.map((edge) => (
-                <button
-                  key={edge.id}
-                  type="button"
-                  onClick={() => onSelectNode(edge.source)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded bg-[#09090b] border border-[#27272a] hover:border-zinc-600 text-xs transition-colors cursor-pointer"
-                >
-                  <span className="text-zinc-300 truncate">
-                    From: {nodeNameById[edge.source] ?? edge.source}
-                  </span>
-                  <span className="font-mono text-[11px] text-zinc-400 shrink-0 ml-2">
-                    {edge.protocol}
-                  </span>
-                </button>
-              ))}
-              {outboundEdges.map((edge) => (
-                <button
-                  key={edge.id}
-                  type="button"
-                  onClick={() => onSelectNode(edge.target)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded bg-[#09090b] border border-[#27272a] hover:border-zinc-600 text-xs transition-colors cursor-pointer"
-                >
-                  <span className="text-zinc-300 truncate">
-                    To: {nodeNameById[edge.target] ?? edge.target}
-                  </span>
-                  <span className="font-mono text-[11px] text-sky-400 shrink-0 ml-2">
-                    {edge.protocol}
-                  </span>
-                </button>
-              ))}
+              {inboundEdges.map((edge) => {
+                const srcName = nodeNameById[edge.source] ?? edge.source;
+                return (
+                  <button
+                    key={edge.id}
+                    type="button"
+                    title={`From ${srcName} via ${edge.protocol} (${edge.label})`}
+                    onClick={() => onSelectNode(edge.source)}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded bg-[#09090b] border border-[#27272a] hover:border-zinc-600 text-xs transition-colors cursor-pointer"
+                  >
+                    <span className="text-zinc-300 truncate min-w-0">
+                      From: {srcName}
+                    </span>
+                    <span className="font-mono text-[11px] text-zinc-400 shrink-0 ml-2">
+                      {edge.protocol}
+                    </span>
+                  </button>
+                );
+              })}
+              {outboundEdges.map((edge) => {
+                const dstName = nodeNameById[edge.target] ?? edge.target;
+                return (
+                  <button
+                    key={edge.id}
+                    type="button"
+                    title={`To ${dstName} via ${edge.protocol} (${edge.label})`}
+                    onClick={() => onSelectNode(edge.target)}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded bg-[#09090b] border border-[#27272a] hover:border-zinc-600 text-xs transition-colors cursor-pointer"
+                  >
+                    <span className="text-zinc-300 truncate min-w-0">
+                      To: {dstName}
+                    </span>
+                    <span className="font-mono text-[11px] text-sky-400 shrink-0 ml-2">
+                      {edge.protocol}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>

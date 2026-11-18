@@ -115,7 +115,7 @@ export const MultiAgentAuditPanel: React.FC<MultiAgentAuditPanelProps> = ({
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-[#09090b] p-6">
+    <div className="h-full min-h-0 overflow-y-auto bg-[#09090b] p-4 sm:p-6 pb-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Top Council Header + 1-Click Auto-Heal CTA */}
         <div className="bg-[#111114] border border-[#27272a] rounded-lg p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">

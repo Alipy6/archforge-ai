@@ -69,8 +69,8 @@ export const CompilerSettingsModal: React.FC<CompilerSettingsModalProps> = ({
       aria-labelledby="compiler-settings-title"
       className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
     >
-      <div className="w-full max-w-lg bg-[#111114] border border-[#27272a] rounded-lg overflow-hidden my-auto">
-        <div className="px-5 py-3.5 border-b border-[#27272a] flex items-center justify-between">
+      <div className="w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col bg-[#111114] border border-[#27272a] rounded-lg overflow-hidden my-auto">
+        <div className="px-5 py-3.5 border-b border-[#27272a] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-sky-400" />
             <h2
@@ -90,7 +90,7 @@ export const CompilerSettingsModal: React.FC<CompilerSettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="p-5 space-y-4 text-xs max-h-[78vh] overflow-y-auto">
+        <div className="flex-1 min-h-0 p-5 space-y-4 text-xs overflow-y-auto">
           {/* Active Compiler Pipeline Banner */}
           <div className="bg-[#09090b] border border-[#27272a] rounded p-3 space-y-1">
             <div className="flex items-center justify-between font-mono">
@@ -329,7 +329,7 @@ export const CompilerSettingsModal: React.FC<CompilerSettingsModalProps> = ({
           </label>
         </div>
 
-        <div className="px-5 py-3 bg-[#09090b] border-t border-[#27272a] flex items-center justify-end gap-2">
+        <div className="px-5 py-3 bg-[#09090b] border-t border-[#27272a] flex items-center justify-end gap-2 shrink-0">
           <button
             type="button"
             onClick={onClose}

@@ -20,9 +20,10 @@ ArchForge AI transforms product requirements, compliance constraints, and worklo
 │  │ 5-Tier SVG + HTML   │  │ Deterministic Engines    │  │ Artifact Studio │  │
 │  │ Topology Canvas     │◄─┤ • finopsSimulator.ts     │  │ • schema.sql    │  │
 │  │ • Pan / Zoom / Fit  │  │ • chaosEngine.ts         │  │ • compose.yml   │  │
-│  │ • Port De-collision │  │ • deterministicCompiler  │  │ • openapi.yaml  │  │
-│  │ • Chaos Outage Mode │  │ • layoutEngine.ts        │  │ • Executive RFC │  │
-│  └─────────┬───────────┘  └──────────────────────────┘  └─────────────────┘  │
+│  │ • Export Vector SVG │  │ • deterministicCompiler  │  │ • openapi.yaml  │  │
+│  │ • Chaos Outage Mode │  │ • exportEngine.ts        │  │ • Executive RFC │  │
+│  └─────────┬───────────┘  └──────────────────────────┘  │ • blueprint.json│  │
+│            │                                            └─────────────────┘  │
 └────────────┼─────────────────────────────────────────────────────────────────┘
              │ POST /api/compile · /api/auto-heal · /api/verify-key (120s)
              ▼
@@ -59,8 +60,10 @@ ArchForge AI transforms product requirements, compliance constraints, and worklo
   3. **Cloud FinOps Economist** (GPU/CPU right-sizing, quantization, cross-AZ egress waste).
 - **1-Click Auto-Heal**: Sends the active graph and audit findings to `/api/auto-heal` to synthesize a remediated revision along with a structured **Before/After Architecture Diff Summary**.
 
-### 4. Production Artifact & Client Proposal Studio
-- Exports `schema.sql` (PostgreSQL 17 DDL with partitioning, indexes, and RLS), `docker-compose.yml`, `openapi.yaml` (OpenAPI 3.1.0), and `Executive_RFC_Proposal.md` enriched with a live simulated FinOps appendix.
+### 4. Production Artifact, Vector Diagram & Client Proposal Studio
+- **Standalone Vector Topology Export (`.svg`)**: One-click **Export SVG** in the canvas toolbar serializes the active 5-tier topology (styled nodes, utilization bars, SPOF/HA badges, directional Bezier protocol wires, and live FinOps summary banner) into a zero-dependency `.svg` vector diagram ready for GitHub READMEs, Notion, Confluence, or architecture review decks.
+- **Portable Blueprint Schema (`blueprint.json`)**: Exports the complete typed architecture revision, multi-agent audit findings, and live simulated FinOps snapshot as structured JSON.
+- **Production Code Deliverables**: Exports `schema.sql` (PostgreSQL 17 DDL with partitioning, indexes, and RLS), `docker-compose.yml`, `openapi.yaml` (OpenAPI 3.1.0), and `Executive_RFC_Proposal.md` enriched with a live simulated FinOps appendix.
 
 ---
 
@@ -74,9 +77,11 @@ ArchForge AI transforms product requirements, compliance constraints, and worklo
 | `1` / `2` / `3` | Switch between **Topology & FinOps**, **Agent Audit**, and **Artifacts & RFC** |
 | `Esc` | Clear active outage simulation, close modals/drawers, or blur input |
 
+*(All single-key workspace shortcuts strictly ignore `Ctrl`/`Cmd`/`Alt` combinations so native browser Find, Copy, Refresh, and Tab shortcuts are never intercepted.)*
+
 ---
 
-## Local Development & Verification
+## Local Development, CI & Verification
 
 ### Prerequisites
 - Node.js `>= 22.6`
@@ -86,19 +91,20 @@ ArchForge AI transforms product requirements, compliance constraints, and worklo
    ```bash
    npm install
    ```
-2. Copy `.env.example` to `.env` and configure your server-side Gemini API key:
+2. Copy `.env.example` to `.env` and configure your server-side Gemini API key (or supply a BYOK key directly inside **Model Settings** in the UI):
    ```bash
    cp .env.example .env
    ```
-   *(Pre-loaded enterprise case studies, deterministic FinOps simulation, Chaos Blast-Radius mode, and artifact exports work immediately out-of-the-box prior to live API calls.)*
+   *(Pre-loaded enterprise case studies, deterministic domain compilation, FinOps simulation, Chaos Blast-Radius mode, and SVG/JSON/RFC exports work immediately out-of-the-box with zero downtime.)*
 3. Start the full-stack Express + Vite development server on port `3000`:
    ```bash
    npm run dev
    ```
 
-### Testing & Static Verification
+### Testing, Static Verification & GitHub Actions CI
+Automated CI (`.github/workflows/ci.yml`) runs on every `push` and `pull_request` on Node.js 22:
 ```bash
-# Run deterministic unit tests (FinOps math, Chaos engine, Layout & Sanitizer)
+# Run deterministic unit tests (FinOps math, Chaos engine, Domain Compiler, SVG/JSON Export & Shortcuts)
 npm test
 
 # Run strict TypeScript type-checking
@@ -107,3 +113,10 @@ npm run lint
 # Build production frontend bundle
 npm run build
 ```
+
+---
+
+## License
+
+Released under the [MIT License](./LICENSE).
+

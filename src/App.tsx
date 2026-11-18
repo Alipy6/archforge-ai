@@ -20,6 +20,10 @@ import type {
 import { runFinOpsSimulation } from './engine/finopsSimulator';
 import { analyzeNodeOutage } from './engine/chaosEngine';
 import {
+  reconcileSelectionState,
+  resolveWorkspaceShortcut,
+} from './engine/exportEngine';
+import {
   autoHealArchitectureViaGemini,
   compileArchitectureViaGemini,
   computeNextVersionId,
@@ -198,7 +202,7 @@ export default function App() {
     [activeVersion.nodes, selectedNodeId]
   );
 
-  // Power-User Global Keyboard Shortcuts
+  // Power-User Global Keyboard Shortcuts (Modifier-Safe)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -208,54 +212,63 @@ export default function App() {
         target instanceof HTMLSelectElement ||
         Boolean(target?.isContentEditable);
 
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        promptInputRef.current?.focus();
-        return;
-      }
+      const action = resolveWorkspaceShortcut({
+        key: e.key,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+        isEditable,
+        isBusy: telemetryState.active,
+        isModalOpen: isSettingsOpen,
+      });
 
-      if (e.key === 'Escape') {
-        if (isEditable && target) {
-          target.blur();
-          return;
-        }
-        if (isSettingsOpen) {
-          setIsSettingsOpen(false);
-          return;
-        }
-        if (isSubXlInspectorOpen) {
-          setIsSubXlInspectorOpen(false);
-          return;
-        }
-        if (isMobileSidebarOpen) {
-          setIsMobileSidebarOpen(false);
-          return;
-        }
-        if (outageNodeId) {
-          setOutageNodeId(null);
-        }
-        return;
-      }
+      if (!action) return;
 
-      if (isEditable || telemetryState.active || isSettingsOpen) return;
-
-      if (e.key === '/') {
-        e.preventDefault();
-        promptInputRef.current?.focus();
-      } else if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        setActiveTab('topology');
-        setFitTriggerCounter((c) => c + 1);
-      } else if (e.key === 'o' || e.key === 'O') {
-        e.preventDefault();
-        setActiveTab('topology');
-        handleToggleOutageSimulation();
-      } else if (e.key === '1') {
-        setActiveTab('topology');
-      } else if (e.key === '2') {
-        setActiveTab('audit');
-      } else if (e.key === '3') {
-        setActiveTab('artifacts');
+      switch (action) {
+        case 'focus_prompt':
+          e.preventDefault();
+          promptInputRef.current?.focus();
+          break;
+        case 'escape':
+          if (isEditable && target) {
+            target.blur();
+            return;
+          }
+          if (isSettingsOpen) {
+            setIsSettingsOpen(false);
+            return;
+          }
+          if (isSubXlInspectorOpen) {
+            setIsSubXlInspectorOpen(false);
+            return;
+          }
+          if (isMobileSidebarOpen) {
+            setIsMobileSidebarOpen(false);
+            return;
+          }
+          if (outageNodeId) {
+            setOutageNodeId(null);
+          }
+          break;
+        case 'fit_canvas':
+          e.preventDefault();
+          setActiveTab('topology');
+          setFitTriggerCounter((c) => c + 1);
+          break;
+        case 'toggle_outage':
+          e.preventDefault();
+          setActiveTab('topology');
+          handleToggleOutageSimulation();
+          break;
+        case 'tab_topology':
+          setActiveTab('topology');
+          break;
+        case 'tab_audit':
+          setActiveTab('audit');
+          break;
+        case 'tab_artifacts':
+          setActiveTab('artifacts');
+          break;
       }
     };
 
@@ -284,13 +297,15 @@ export default function App() {
     const ver =
       bp.versions.find((v) => v.versionId === bp.activeVersionId) ??
       bp.versions[0];
-    const initialNode =
-      ver.nodes.find((n) => n.spofRisk === 'CRITICAL')?.id ??
-      ver.nodes[0]?.id ??
-      null;
-    setSelectedNodeId(initialNode);
-    setHighlightedNodeId(null);
-    setOutageNodeId(null);
+    const nextState = reconcileSelectionState({
+      nodes: ver.nodes,
+      previousSelectedNodeId: selectedNodeId,
+      previousOutageNodeId: outageNodeId,
+      resetAllTransientStates: true,
+    });
+    setSelectedNodeId(nextState.selectedNodeId);
+    setHighlightedNodeId(nextState.highlightedNodeId);
+    setOutageNodeId(nextState.outageNodeId);
     setApiErrorBanner(null);
     setIsMobileSidebarOpen(false);
     setIsSubXlInspectorOpen(false);
@@ -308,15 +323,18 @@ export default function App() {
       (v) => v.versionId === versionId
     );
     if (nextVer) {
-      const keepSelection = nextVer.nodes.some((n) => n.id === selectedNodeId);
-      if (!keepSelection) {
-        setSelectedNodeId(nextVer.nodes[0]?.id ?? null);
-      }
-      if (outageNodeId && !nextVer.nodes.some((n) => n.id === outageNodeId)) {
-        setOutageNodeId(null);
-      }
+      const nextState = reconcileSelectionState({
+        nodes: nextVer.nodes,
+        previousSelectedNodeId: selectedNodeId,
+        previousOutageNodeId: outageNodeId,
+        resetAllTransientStates: false,
+      });
+      setSelectedNodeId(nextState.selectedNodeId);
+      setHighlightedNodeId(nextState.highlightedNodeId);
+      setOutageNodeId(nextState.outageNodeId);
+    } else {
+      setHighlightedNodeId(null);
     }
-    setHighlightedNodeId(null);
   };
 
   const handleDeleteBlueprint = (id: string) => {
@@ -517,7 +535,7 @@ export default function App() {
             }`}
           >
             <span className="sm:hidden">Artifacts</span>
-            <span className="hidden sm:inline">Artifacts &amp; RFC (4)</span>
+            <span className="hidden sm:inline">Artifacts &amp; RFC (5)</span>
           </button>
         </nav>
 
@@ -583,6 +601,7 @@ export default function App() {
                       <div className="flex items-start justify-between p-2.5 gap-1">
                         <button
                           type="button"
+                          title={`${bp.name} — ${bp.domainTag}`}
                           onClick={() => handleSelectBlueprint(bp)}
                           className="text-left flex-1 min-w-0 cursor-pointer"
                         >
@@ -629,6 +648,7 @@ export default function App() {
                     <button
                       key={ver.versionId}
                       type="button"
+                      title={ver.versionLabel}
                       onClick={() => handleSelectVersion(ver.versionId)}
                       className={`w-full flex items-center justify-between px-2.5 py-2 rounded border text-xs font-mono transition-colors cursor-pointer ${
                         isActiveVer
@@ -859,6 +879,9 @@ export default function App() {
                 {/* Center Interactive System Topology Canvas */}
                 <div className="flex-1 min-w-0 relative">
                   <TopologyCanvas
+                    blueprintName={activeBlueprint.name}
+                    domainTag={activeBlueprint.domainTag}
+                    versionLabel={activeVersion.versionLabel}
                     nodes={activeVersion.nodes}
                     edges={activeVersion.edges}
                     simulation={simulation}
@@ -875,7 +898,7 @@ export default function App() {
                 </div>
 
                 {/* Desktop (>= 1280px xl) Docked Node Inspector */}
-                <div className="hidden xl:block w-[348px] shrink-0 h-full">
+                <div className="hidden xl:flex w-[348px] shrink-0 h-full min-h-0 flex-col">
                   <NodeInspectorDrawer
                     node={selectedNode}
                     metrics={
@@ -905,7 +928,7 @@ export default function App() {
                       onClick={() => setIsSubXlInspectorOpen(false)}
                       className="xl:hidden fixed inset-0 top-12 z-20 bg-black/55"
                     />
-                    <div className="xl:hidden fixed top-12 bottom-0 right-0 z-30 w-full max-w-[360px]">
+                    <div className="xl:hidden fixed top-12 bottom-0 right-0 z-30 w-full max-w-[360px] flex flex-col min-h-0">
                       <NodeInspectorDrawer
                         node={selectedNode}
                         metrics={
@@ -959,6 +982,8 @@ export default function App() {
           {activeTab === 'artifacts' && (
             <div className="flex-1 min-h-0 overflow-hidden">
               <ArtifactStudio
+                blueprint={activeBlueprint}
+                activeVersion={activeVersion}
                 blueprintName={activeBlueprint.name}
                 versionLabel={activeVersion.versionLabel}
                 artifacts={activeVersion.artifacts}

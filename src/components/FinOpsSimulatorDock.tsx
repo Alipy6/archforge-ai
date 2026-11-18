@@ -110,8 +110,9 @@ export const FinOpsSimulatorDock: React.FC<FinOpsSimulatorDockProps> = ({
           {bottleneckNode && (
             <button
               type="button"
+              title={`Bottleneck: ${bottleneckNode.label} (${simulation.maxUtilizationPercent}% utilization · ${bottleneckNode.technology}) — Click to inspect`}
               onClick={() => onSelectNode(bottleneckNode.id)}
-              className={`max-w-full inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-mono tabular-nums transition-colors cursor-pointer ${
+              className={`min-w-0 max-w-full shrink inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-mono tabular-nums transition-colors cursor-pointer ${
                 simulation.maxUtilizationPercent > 95
                   ? 'bg-red-500/10 border-red-500/40 text-red-300 hover:bg-red-500/20'
                   : simulation.maxUtilizationPercent > 75
@@ -124,7 +125,7 @@ export const FinOpsSimulatorDock: React.FC<FinOpsSimulatorDockProps> = ({
               ) : (
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               )}
-              <span className="truncate max-w-[210px] sm:max-w-[260px]">
+              <span className="truncate max-w-[200px] sm:max-w-[260px]">
                 Bottleneck: {bottleneckNode.label} ({simulation.maxUtilizationPercent}%)
               </span>
             </button>
